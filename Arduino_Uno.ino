@@ -2,30 +2,36 @@
 #include <Adafruit_Sensor.h>
 #include <DHT.h>
 #include <DHT_U.h>
+#include "MQ135.h"
+#define RZERO 464.1045837402
 
 int triggerPin = 10;
 int echoPin = 9;
-int MQ135 = A0;
 int TemHumi = 7;
+MQ135 gasSensor = MQ135 (A0);
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 DHT dht(TemHumi, DHT11);
 
 void setup()
 {
-  pinMode(MQ135, INPUT);
+  //pinMode(MQ135, INPUT);
   pinMode(triggerPin,OUTPUT);
   pinMode(echoPin,INPUT);
-
+  pinMode(TemHumi,INPUT);
+  Serial.begin(9600);
+  //float rzero = gasSensor.getRZero();
+  //Serial.print("rzero:");
+  //Serial.println(rzero, DEC);
+  
   lcd.init();
   lcd.backlight();
   dht.begin();
   
 }
-
 void loop()
 {
-  int dataMQ135 = analogRead(MQ135);
+  float dataMQ135 = gasSensor.getPPM();
   float dataTemp = dht.readTemperature();
   float dataHumi = dht.readHumidity();
   float dataFeel = dht.computeHeatIndex(dataTemp, dataHumi, false);
@@ -36,44 +42,55 @@ void loop()
   digitalWrite(triggerPin,LOW);
   int duration = pulseIn(echoPin, HIGH);
   int distance = duration / 29 / 2;
+  int sodongho;
+  if ( distance < 11 )
+  {
+    sodongho = 1;
+  }     
+  else{
+   sodongho = 0; 
+  }
   
-  if( distance < 10 )
+  if ( sodongho == 1 )
   {
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("Temper : ");
   lcd.print(dataTemp);
-  delay(1000);
   lcd.setCursor(0,1);
-  lcd.print("State : ");
-  if (dataTemp < 24 || dataTemp > 27)
+  delay(1000);
+  lcd.print("State :  ");
+  if ( dataTemp >= 23 || dataTemp <= 27 )
+  {
+    lcd.print("Perfect");
+  }
+  else if ( dataTemp < 23 || dataTemp >= 17 )
   {
     lcd.print("Good");
   }
-  else if (dataTemp < 27 || dataTemp > 24)
+  else if ( dataTemp > 27 || dataTemp <= 29 )
   {
-    lcd.print("Perfect");
+    lcd.print("Good");
   }
   else
   {
     lcd.print("Bad");
   }
-  delay(2000);
+  delay(3000);
   lcd.clear();
-
   lcd.setCursor(0,0);
   lcd.print("Humi : ");
   lcd.print(dataHumi);
   lcd.setCursor(15,0);
   lcd.print("%");
-  delay(1000);
   lcd.setCursor(0,1);
-  lcd.print("State : ");
-  if (dataHumi < 30)
+  delay(1000);
+  lcd.print("State :  ");
+  if ( dataHumi < 40 )
   {
     lcd.print("Perfect");
   }
-  else if (dataHumi < 60)
+  else if ( dataHumi < 70 )
   {
     lcd.print("Good");
   }
@@ -81,18 +98,15 @@ void loop()
   {
     lcd.print("Bad");
   }
-  delay(2000);
+  delay(3000);
   lcd.clear();
-
   lcd.setCursor(0,0);
   lcd.print("FeelTemp : ");
   lcd.print(dataFeel);
-  delay(1000);
   lcd.setCursor(0,1);
-  lcd.print("Made By Lee");
-  delay(2000);
+  lcd.print("Your Feeling");
+  delay(3000);
   lcd.clear();
-
   lcd.setCursor(0,0);
   lcd.print("CO2 : ");
   lcd.print(dataMQ135);
@@ -101,11 +115,11 @@ void loop()
   delay(1000);
   lcd.setCursor(0,1);
   lcd.print("State : ");
-  if (dataHumi < 300)
+  if ( dataMQ135 < 700 )
   {
     lcd.print("Perfect");
   }
-  else if (dataHumi < 500)
+  else if ( dataMQ135 < 1000 )
   {
     lcd.print("Good");
   }
@@ -113,11 +127,15 @@ void loop()
   {
     lcd.print("Bad");
   }
-  delay(2000);
+  delay(3000);
   lcd.clear();
   }
   else
   {
-    lcd.clear();
-  }
-}
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("   Come Here    ");
+  lcd.setCursor(0,1);
+  lcd.print("  <----------");
+  }  
+  } 
