@@ -1,0 +1,27 @@
+int Mesure_Pin = A0;
+int LED_Power = 3;
+
+int samplingTime = 280;
+int daltaTime = 320 - samplingTime;
+int sleepTime = 10000 - daltaTime - samplingTime;
+int AD_Meas = 0;
+float Dusty = 0.0;
+
+void setup()
+{
+  Serial.begin(9600);
+  pinMode(LED_Power,OUTPUT);
+}
+
+void loop()
+{
+  digitalWrite(LED_Power,LOW);
+  AD_Meas = analogRead(Mesure_Pin);
+  digitalWrite(LED_Power,HIGH);
+
+  Dusty = AD_Meas * 0.0003 + 0.017;
+  Serial.print("- Dust Density: ");
+  Serial.print(Dusty * 1000);
+  Serial.println("ug/m");
+  delay(1000);
+}
